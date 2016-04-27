@@ -26,8 +26,16 @@ class Learner(object):
         num_tree_dist = 600 / self.bin_width
         num_tree_height = 400 / self.bin_height
         num_monkey_height = 400 / self.bin_height
-        num_monkey_vel = 10 # TO DO: FIX THIS TO NOT BE HARDCODED
+        self.vel_array = [-np.inf ,-40, -30, -20, -10, 0, 10, 20, 30, 40, np.inf]
+        num_monkey_vel = len(self.vel_array)-1 # TO DO: FIX THIS TO NOT BE HARDCODED
         self.Q = np.zeros((2,num_tree_dist,num_tree_height,num_monkey_height,num_monkey_vel))
+    
+    def velocity_bin(self, vel_array, monkey_vel):
+        for i in range(len(vel_array)-1):
+            #print vel_array[i] < monkey_vel < vel_array[i+1]
+            if vel_array[i] < monkey_vel <= vel_array[i+1]:
+                vel_bin = i
+                return vel_bin
         
     def reset(self):
         self.last_state  = None
@@ -55,12 +63,13 @@ class Learner(object):
             self.state_D =0
         self.state_T = state['tree']['bot'] / self.bin_height # height of bottom of tree
         self.state_M = state['monkey']['bot'] / self.bin_height # height of bottom of monkey
-        self.state_V = state['monkey']['vel'] / self.bin_vel # monkey's velocity
-        print self.state_D, self.state_T, self.state_M, self.state_V
+        self.state_V = self.velocity_bin(self.vel_array, state['monkey']['vel']) # monkey's velocity
         
         new_action = npr.rand() < 0.1
         #new_action = 1
         new_state  = state
+        
+        
         
         #Q_old = self.Q[self.last_action, self.state_D, self.state_T, self.state_M, self.state_V]
         #Q_best = max(self.Q[:,0,0,0,0])
