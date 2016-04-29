@@ -34,7 +34,7 @@ class SwingyMonkey:
         self.screen_height = 400
         self.horz_speed    = 25
         self.impulse       = 15
-        self.gravity       = npr.choice([1,4])
+        self.gravity       = 4 #npr.choice([1,4])
         self.tree_mean     = 5
         self.tree_gap      = 200
         self.tree_offset   = -300
@@ -140,7 +140,7 @@ class SwingyMonkey:
 
         # Perhaps take an action via the callback.
         if self.action_fn is not None and self.action_fn(self.get_state()):
-            self.vel = npr.poisson(self.impulse)
+            self.vel = 10 #npr.poisson(self.impulse)
             self.hook = self.screen_width
 
         # Eliminate trees that have moved off the screen.
