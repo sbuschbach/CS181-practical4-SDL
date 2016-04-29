@@ -26,22 +26,14 @@ class Learner(object):
         
         # Initialize Q-matrix to 0s
         num_actions = 2
-        self.tree_dist_array = [600, 400, 315, 285, 260, 235, 210, 185, 160, 135, 110, 85, 60, 35, -np.inf]
-        #self.tree_dist_array = [600, 500, 400, 300, 200, 100, 0, -np.inf]
-        num_tree_dist = len(self.tree_dist_array) - 1
-        '''
-        self.tree_dist_array = [-np.inf ,-30, -10, 0]
-        num_tree_dist = (600 / self.bin_width) + (len(self.tree_dist_array) - 1)
-        '''
+        num_tree_dist = 3
         self.num_tree_height = (400 / self.bin_height) * 2
         self.monkey_height_array = [-np.inf, 30, np.inf]
         num_monkey_height = len(self.monkey_height_array) - 1
-        #num_monkey_height = 400 / self.bin_height
         self.vel_array = [-np.inf , -30, -10, 0, 3,7, np.inf]
         num_monkey_vel = len(self.vel_array)-1
         num_gravity = 3
         self.gravity_dict = {1:0, 4:1, None:2}
-        #self.Q = np.zeros((num_actions,num_tree_dist,self.num_tree_height,num_monkey_vel, num_gravity))
         self.Q = np.zeros((num_actions,num_tree_dist,self.num_tree_height,num_monkey_height,num_monkey_vel, num_gravity))
         
     def velocity_bin(self, vel_array, monkey_vel):
@@ -56,20 +48,15 @@ class Learner(object):
                 height_bin = i
                 return height_bin
     
-    def tree_dist_bin(self, tree_dist_array, tree_dist):
-        for i in range(len(tree_dist_array)-1):
-            if tree_dist_array[i] >= tree_dist > tree_dist_array[i+1]:
-                dist_bin = i
-                return dist_bin
+    def tree_dist_bin(self, tree_dist):
+        if 45 < tree_dist <= 295:
+            dist_bin = 0
+        elif 295 < tree_dist <= np.inf:
+            dist_bin = 1
+        else:
+            dist_bin = 2
+        return dist_bin
     
-    '''
-    def tree_dist_bin(self, tree_dist_array, tree_dist):
-        for i in range(len(tree_dist_array)-1):
-            if tree_dist_array[i] < tree_dist <= tree_dist_array[i+1]:
-                regular_bins = 600 / self.bin_width
-                tree_dist_bin = i + regular_bins
-                return tree_dist_bin
-    '''
     
     def reset(self):
         self.last_state  = None
@@ -79,10 +66,6 @@ class Learner(object):
         self.epoch = 0
 
     def action_callback(self, state):
-        '''
-        Implement this function to learn things and take actions.
-        Return 0 if you don't want to jump and 1 if you do.
-        '''
         # You might do some learning here based on the current state and the last state.
 
         # You'll need to select and action and return it.
@@ -93,31 +76,15 @@ class Learner(object):
         # Get Q-old from previous time
         if self.last_action != None:
             Q_old = self.Q[self.last_action, self.state_D, self.state_T, self.state_M, self.state_V, self.state_G]
-            '''
-            Q_old = self.Q[self.last_action, self.state_D, self.state_T, self.state_M, self.state_V, self.state_G]
-            '''
 
         # Get state space
-        '''
-        self.state_D = state['tree']['dist'] # distance to tree
-        if self.state_D >= 0:
-            self.state_D = self.state_D / self.bin_width
-        else: 
-            self.state_D = self.tree_dist_bin(self.tree_dist_array, self.state_D)
-        '''
-        self.state_D = self.tree_dist_bin(self.tree_dist_array, state['tree']['dist'])
+        self.state_D = self.tree_dist_bin(state['tree']['dist'])
         self.state_T = (state['tree']['bot'] - state['monkey']['bot']) # height of bottom of tree
         if self.state_T >= 0:
             self.state_T = self.state_T / self.bin_height 
         else:
             self.state_T = (abs(self.state_T) / self.bin_height) + self.num_tree_height/2
         self.state_M = self.monkey_height_bin(self.monkey_height_array, state['monkey']['bot'])
-        #print self.epoch, state['monkey']['bot'], self.state_M
-        #pdb.set_trace()
-        '''
-        self.state_T = state['tree']['bot'] / self.bin_height # height of bottom of tree
-        self.state_M = state['monkey']['bot'] / self.bin_height # height of bottom of monkey
-        '''
         self.state_V = self.velocity_bin(self.vel_array, state['monkey']['vel']) # monkey's velocity
         self.state_G = self.gravity_dict[self.gravity]
 
@@ -128,13 +95,6 @@ class Learner(object):
             print self.epoch, self.Q[self.last_action, self.state_D, self.state_T, self.state_M, self.state_V, self.state_G]
             self.Q[self.last_action, self.state_D, self.state_T, self.state_M, self.state_V, self.state_G] = Q_new
             print self.epoch, self.Q[self.last_action, self.state_D, self.state_T, self.state_M, self.state_V, self.state_G]
-            '''
-            Q_best = max(self.Q[:,self.state_D, self.state_T, self.state_V, self.state_G])
-            Q_new = Q_old + self.alpha * (self.last_reward + (self.gamma * Q_best) - Q_old)
-            print self.epoch, self.Q[self.last_action, self.state_D, self.state_T, self.state_V, self.state_G]
-            self.Q[self.last_action, self.state_D, self.state_T, self.state_V, self.state_G] = Q_new
-            print self.epoch, self.Q[self.last_action, self.state_D, self.state_T, self.state_V, self.state_G]
-            '''
         
         # Check if this is the very beginning of the game
         if self.last_state == None or self.epoch == 1:
@@ -146,10 +106,6 @@ class Learner(object):
             # Calculate the Qs for jumping or not
             Q_stay = self.Q[0, self.state_D, self.state_T, self.state_M, self.state_V, self.state_G]
             Q_jump = self.Q[1, self.state_D, self.state_T, self.state_M, self.state_V, self.state_G]
-            '''
-            Q_stay = self.Q[0, self.state_D, self.state_T, self.state_M, self.state_V, self.state_G]
-            Q_jump = self.Q[1, self.state_D, self.state_T, self.state_M, self.state_V, self.state_G]
-            '''
             if Q_stay == Q_jump: # if equal, choose randomly
                 new_action = npr.rand() < 0.08
             else:
