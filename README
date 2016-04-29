@@ -1,0 +1,20 @@
+To run our source code for the model-free implementation, simply run "python model_free_RUN_ME.py". Likewise, run "python model_based.py", although, as we stated in our writeup, this model was not successfully implemented in the end.
+
+The rest of the files are either implement the supporting files or the SwingyMonkey game. 
+
+
+-> model_based.py : implementation of the model-based solution
+-> model_free_RUN_ME.py : implementation of the model-free solution
+-> README : this file
+-> res : resources required to run the SwingyMonkey game
+-> SwingyMonkey.py : implementation of the SwingyMonkey game
+-> writeup.pdf : the Practical writeup
+
+Should you have any questions, please do not hesitate to contact:
+	lukechang94@gmail.com
+	sbuschbach@college.harvard.edu
+	dtomc@g.harvard.edu
+
+
+Sayonara 181, Team LSD is out~
+
