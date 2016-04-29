@@ -17,22 +17,22 @@ class Learner(object):
         # Initialize discretizing size
         self.bin_width = 50
         self.bin_height = 40
-        self.gamma = .3
+        self.gamma = 0.8
+        self.alpha = 0.8
         self.gravity = None
         self.epoch = 0
         self.reset_num = 0
         
         # Initialize Q-matrix to 0s
         num_actions = 2
-        #self.tree_dist_array = [np.inf] + range(460, -160, -40) + [-np.inf]
-        self.tree_dist_array = [600, 500, 400, 300, 200, 100, 0, -np.inf]
+        self.tree_dist_array = [np.inf] + range(460, -160, -60) + [-np.inf]
         num_tree_dist = len(self.tree_dist_array) - 1
 
 
-        self.tree_height_array = [-np.inf] + range(-50, 150, 8) + [np.inf]
+        self.tree_height_array = [-np.inf] + range(-50, 150, 16) + [np.inf]
         self.num_tree_height = len(self.tree_height_array) - 1
 
-        self.vel_array = [-np.inf , -30, -10, 0, 3,7, np.inf]
+        self.vel_array = [-np.inf , 0, 18, np.inf]
         num_monkey_vel = len(self.vel_array)-1
         num_gravity = 3
         self.gravity_dict = {1:0, 4:1, None:2}
@@ -63,10 +63,6 @@ class Learner(object):
         # You'll need to select and action and return it.
         # Return 0 to swing and 1 to jump.
         
-        #pdb.set_trace()
-        #if self.reset_num > 50:
-        #    pdb.set_trace()
-        
         # Get Q-old from previous time
         if self.last_action != None:
             Q_old = self.Q[self.last_action, self.state_D, self.state_T, self.state_V, self.state_G]
@@ -86,12 +82,9 @@ class Learner(object):
         if self.last_action != None:
             self.epoch += 1.
             Q_best = max(self.Q[:,self.state_D, self.state_T, self.state_V, self.state_G])
-            alpha = 1./self.epoch
             #Q_old = self.Q[self.last_action, self.state_D, self.state_T, self.state_V, self.state_G]
-            Q_new = Q_old + alpha * (self.last_reward + (self.gamma * Q_best) - Q_old)
-            print self.epoch, self.Q[self.last_action, self.last_state_D, self.last_state_T, self.last_state_V, self.last_state_G]
+            Q_new = Q_old + self.alpha * (self.last_reward + (self.gamma * Q_best) - Q_old)
             self.Q[self.last_action, self.last_state_D, self.last_state_T, self.last_state_V, self.last_state_G] = Q_new
-            print self.epoch, self.Q[self.last_action, self.last_state_D, self.last_state_T, self.last_state_V, self.last_state_G]
 
         #pdb.set_trace()
         
@@ -101,14 +94,15 @@ class Learner(object):
             self.gravity1 = state['monkey']['bot']
             new_action = 0
         else:
-            #print True
+
             # Calculate the Qs for jumping or not
             Q_stay = self.Q[0, self.state_D, self.state_T, self.state_V, self.state_G]
             Q_jump = self.Q[1, self.state_D, self.state_T, self.state_V, self.state_G]
 
             if Q_stay == Q_jump: # if equal, choose randomly
-                new_action = npr.rand() < 0.1
+                new_action = npr.rand() < 0.2
             else:
+                """
                 # e-greedy
                 e_greedy = np.random.rand() < 1./(self.reset_num + 1)
                 if e_greedy == True:
@@ -116,13 +110,8 @@ class Learner(object):
                     print True, e_greedy
                 else:
                     new_action = np.argmax([Q_stay,Q_jump])
-                #new_action = np.argmax([Q_stay,Q_jump])
-        
-        #if self.reset_num > 50:
-        #    print self.Q[0, self.state_D, self.state_T, self.state_V, self.state_G], self.Q[1, self.state_D, self.state_T, self.state_V, self.state_G], new_action
-        #    pdb.set_trace()
-        
-        #pdb.set_trace()
+                """
+                new_action = np.argmax([Q_stay,Q_jump])
 
         
         # If we are on second state, calculate gravity
@@ -181,7 +170,7 @@ if __name__ == '__main__':
 	hist = []
 
 	# Run games. 
-	run_games(agent, hist, 400, 7)
+	run_games(agent, hist, 102, 1)
 
 	# Save history. 
 	np.save('hist',np.array(hist))
