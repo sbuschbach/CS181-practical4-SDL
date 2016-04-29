@@ -23,18 +23,18 @@ class Learner(object):
         
         # Initialize Q-matrix to 0s
         num_actions = 2
-        self.tree_dist_array = [np.inf, 460, 360, 260, 160, 60, -60, -160, -np.inf]
+        self.tree_dist_array = [np.inf] + range(460, -160, -40) + [-np.inf]
         #self.tree_dist_array = [600, 500, 400, 300, 200, 100, 0, -np.inf]
         num_tree_dist = len(self.tree_dist_array) - 1
 
-        self.tree_height_array = [-np.inf, 0, 100, np.inf]
+        self.tree_height_array = [-np.inf] + range(-50, 150, 8) + [np.inf]
         self.num_tree_height = len(self.tree_height_array) - 1
 
         self.vel_array = [-np.inf , -30, -10, 0, 3,7, np.inf]
         num_monkey_vel = len(self.vel_array)-1
         num_gravity = 3
         self.gravity_dict = {1:0, 4:1, None:2}
-        self.Q = np.zeros((num_actions,num_tree_dist,self.num_tree_height,num_monkey_vel, num_gravity))
+        self.Q = np.zeros((num_actions,num_tree_dist,self.num_tree_height, num_gravity))
     
     def asc_bin(self, interval_array, val):
         for i in range(len(interval_array)-1):
@@ -65,14 +65,12 @@ class Learner(object):
         self.epoch = 0
 
     def action_callback(self, state):
-        #pdb.set_trace()
         # You'll need to select and action and return it.
         # Return 0 to swing and 1 to jump.
-        
-        
+    
         # Get Q-old from previous time
         if self.last_action != None:
-            Q_old = self.Q[self.last_action, self.state_D, self.state_T, self.state_V, self.state_G]
+            Q_old = self.Q[self.last_action, self.state_D, self.state_T, self.state_G]
 
         # Get state space
         '''
@@ -100,11 +98,11 @@ class Learner(object):
         self.state_G = self.gravity_dict[self.gravity]
 
         if self.last_action != None:
-            Q_best = max(self.Q[:,self.state_D, self.state_T, self.state_V, self.state_G])
+            Q_best = max(self.Q[:,self.state_D, self.state_T, self.state_G])
             Q_new = Q_old + self.alpha * (self.last_reward + (self.gamma * Q_best) - Q_old)
-            print self.epoch, self.Q[self.last_action, self.state_D, self.state_T, self.state_V, self.state_G]
-            self.Q[self.last_action, self.state_D, self.state_T, self.state_V, self.state_G] = Q_new
-            print self.epoch, self.Q[self.last_action, self.state_D, self.state_T, self.state_V, self.state_G]
+            print self.epoch, self.Q[self.last_action, self.state_D, self.state_T, self.state_G]
+            self.Q[self.last_action, self.state_D, self.state_T, self.state_G] = Q_new
+            print self.epoch, self.Q[self.last_action, self.state_D, self.state_T, self.state_G]
             '''
             Q_best = max(self.Q[:,self.state_D, self.state_T, self.state_M, self.state_V, self.state_G])
             Q_new = Q_old + self.alpha * (self.last_reward + (self.gamma * Q_best) - Q_old)
@@ -121,22 +119,16 @@ class Learner(object):
         else:
             #print True
             # Calculate the Qs for jumping or not
-            Q_stay = self.Q[0, self.state_D, self.state_T, self.state_V, self.state_G]
-            Q_jump = self.Q[1, self.state_D, self.state_T, self.state_V, self.state_G]
+            Q_stay = self.Q[0, self.state_D, self.state_T, self.state_G]
+            Q_jump = self.Q[1, self.state_D, self.state_T, self.state_G]
             '''
             Q_stay = self.Q[0, self.state_D, self.state_T, self.state_M, self.state_V, self.state_G]
             Q_jump = self.Q[1, self.state_D, self.state_T, self.state_M, self.state_V, self.state_G]
             '''
             if Q_stay == Q_jump: # if equal, choose randomly
-                new_action = npr.rand() < 0.08
+                new_action = npr.rand() < 0.1
             else:
-                # e-greedy
-                e_greedy = np.random.rand() < 0.1
-                if e_greedy == True:
-                    new_action = npr.rand() < 0.5
-                    print True
-                else:
-                    new_action = np.argmax([Q_stay,Q_jump])
+                new_action = np.argmax([Q_stay,Q_jump])
         
         # If we are on second state, calculate gravity
         if self.epoch == 2:
